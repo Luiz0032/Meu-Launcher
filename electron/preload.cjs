@@ -13,6 +13,14 @@ contextBridge.exposeInMainWorld("liveAPI", {
     return ipcRenderer.invoke("game:open");
   },
 
+  getPreset: () => {
+    return ipcRenderer.invoke("preset:get");
+  },
+
+  savePreset: (preset) => {
+    return ipcRenderer.invoke("preset:save", preset);
+  },
+
   onTikTokEvent: (callback) => {
     const listener = (_event, type, data) => {
       callback(type, data);

@@ -12,6 +12,7 @@ type LiveEvent = {
 type GameAction = {
   id: number;
   type: string;
+  action?: string;
   username?: string;
   amount?: number;
   message?: string;
@@ -20,8 +21,24 @@ type GameAction = {
   time: string;
 };
 
+type PresetConfig = {
+  like: {
+    action: string;
+  };
+  chat: {
+    action: string;
+  };
+  gifts: {
+    [giftName: string]: {
+      action: string;
+    };
+  };
+};
+
 function App() {
-  const [page, setPage] = useState<"dashboard" | "events">("dashboard");
+  const [page, setPage] = useState<
+    "dashboard" | "events" | "settings"
+  >("dashboard");
 
   const [username, setUsername] = useState("");
   const [connected, setConnected] = useState(false);
@@ -36,70 +53,108 @@ function App() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
 
+  const [likeAction, setLikeAction] = useState("jump");
+  const [chatAction, setChatAction] = useState("showMessage");
+  const [roseAction, setRoseAction] = useState("danceShort");
+  const [tiktokAction, setTikTokAction] = useState("danceSpecial");
+  const [defaultGiftAction, setDefaultGiftAction] =
+    useState("giftReaction");
+
+  const [presetStatus, setPresetStatus] = useState("");
+
   useEffect(() => {
-    const removeTikTokListener = window.liveAPI.onTikTokEvent((type, data) => {
-      console.log("Evento TikTok:", type, data);
+    async function loadPreset() {
+      const result = await window.liveAPI.getPreset();
 
-      if (type === "chat" || type === "gift" || type === "like") {
-        setEventCount((value) => value + 1);
+      if (!result.success || !result.preset) {
+        return;
+      }
 
-        const eventUsername = data.username ?? "desconhecido";
-        let description = "";
+      setLikeAction(result.preset.like?.action ?? "jump");
+      setChatAction(result.preset.chat?.action ?? "showMessage");
 
-        if (type === "chat") {
-          description = data.comment ?? "";
+      setRoseAction(
+        result.preset.gifts?.Rose?.action ?? "danceShort"
+      );
+
+      setTikTokAction(
+        result.preset.gifts?.TikTok?.action ?? "danceSpecial"
+      );
+
+      setDefaultGiftAction(
+        result.preset.gifts?.default?.action ?? "giftReaction"
+      );
+    }
+
+    loadPreset();
+  }, []);
+
+  useEffect(() => {
+    const removeTikTokListener = window.liveAPI.onTikTokEvent(
+      (type, data) => {
+        console.log("Evento TikTok:", type, data);
+
+        if (type === "chat" || type === "gift" || type === "like") {
+          setEventCount((value) => value + 1);
+
+          const eventUsername = data.username ?? "desconhecido";
+          let description = "";
+
+          if (type === "chat") {
+            description = data.comment ?? "";
+          }
+
+          if (type === "like") {
+            description = `+${data.likeCount ?? 0} likes`;
+          }
+
+          if (type === "gift") {
+            const repeatCount = data.repeatCount ?? 1;
+
+            description =
+              `${data.giftName ?? "Presente"} x${repeatCount}`;
+
+            setGiftCount((value) => value + repeatCount);
+          }
+
+          const newEvent: LiveEvent = {
+            id: Date.now() + Math.random(),
+            type,
+            username: eventUsername,
+            description,
+            time: new Date().toLocaleTimeString("pt-BR")
+          };
+
+          setEvents((currentEvents) =>
+            [newEvent, ...currentEvents].slice(0, 100)
+          );
         }
 
-        if (type === "like") {
-          description = `+${data.likeCount ?? 0} likes`;
+        if (type === "disconnected") {
+          setConnected(false);
+          setConnecting(false);
+          setStatusMessage("Desconectado");
+          setStartTime(null);
         }
 
-        if (type === "gift") {
-          const repeatCount = data.repeatCount ?? 1;
-
-          description = `${data.giftName ?? "Presente"} x${repeatCount}`;
-
-          setGiftCount((value) => value + repeatCount);
+        if (type === "error") {
+          console.error("TikTok Live:", data.message);
         }
+      }
+    );
 
-        const newEvent: LiveEvent = {
+    const removeGameActionListener =
+      window.liveAPI.onGameAction((action) => {
+        const newAction: GameAction = {
           id: Date.now() + Math.random(),
-          type,
-          username: eventUsername,
-          description,
+          ...action,
           time: new Date().toLocaleTimeString("pt-BR")
         };
 
-        setEvents((currentEvents) =>
-          [newEvent, ...currentEvents].slice(0, 100)
+        setGameActions((currentActions) =>
+          [newAction, ...currentActions].slice(0, 50)
         );
-      }
-
-      if (type === "disconnected") {
-        setConnected(false);
-        setConnecting(false);
-        setStatusMessage("Desconectado");
-        setStartTime(null);
-      }
-
-      if (type === "error") {
-        console.error("TikTok Live:", data.message);
-      }
-    });
-
-    const removeGameActionListener = window.liveAPI.onGameAction((action) => {
-      console.log("Ação do jogo:", action);
-
-      const newAction: GameAction = {
-        id: Date.now() + Math.random(),
-        ...action,
-        time: new Date().toLocaleTimeString("pt-BR")
-      };
-
-      setGameActions((currentActions) =>
-        [newAction, ...currentActions].slice(0, 50)
-      );
-    });
+      });
 
     return () => {
       removeTikTokListener();
@@ -114,7 +169,9 @@ function App() {
     }
 
     const updateTimer = () => {
-      const seconds = Math.floor((Date.now() - startTime) / 1000);
+      const seconds = Math.floor(
+        (Date.now() - startTime) / 1000
+      );
 
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
@@ -146,11 +203,14 @@ function App() {
       setConnecting(true);
       setStatusMessage("Conectando...");
 
-      const result = await window.liveAPI.connectTikTok(username);
+      const result =
+        await window.liveAPI.connectTikTok(username);
 
       if (!result.success) {
         setConnected(false);
-        setStatusMessage(result.error ?? "Erro ao conectar");
+        setStatusMessage(
+          result.error ?? "Erro ao conectar"
+        );
         return;
       }
 
@@ -161,10 +221,11 @@ function App() {
       setGameActions([]);
       setStartTime(Date.now());
 
-      setStatusMessage(`Conectado em @${result.username}`);
+      setStatusMessage(
+        `Conectado em @${result.username}`
+      );
     } catch (error) {
       console.error(error);
-
       setConnected(false);
       setStatusMessage("Erro ao conectar");
     } finally {
@@ -181,21 +242,59 @@ function App() {
     setStartTime(null);
   }
 
-  function clearEvents() {
-    setEvents([]);
-  }
-
   async function handleOpenGame() {
     const result = await window.liveAPI.openGame();
 
     if (!result.success) {
-      console.error("Erro ao abrir jogo:", result.error);
+      console.error(
+        "Erro ao abrir jogo:",
+        result.error
+      );
     }
+  }
+
+  async function handleSavePreset() {
+    const preset: PresetConfig = {
+      like: {
+        action: likeAction
+      },
+      chat: {
+        action: chatAction
+      },
+      gifts: {
+        Rose: {
+          action: roseAction
+        },
+        TikTok: {
+          action: tiktokAction
+        },
+        default: {
+          action: defaultGiftAction
+        }
+      }
+    };
+
+    setPresetStatus("Salvando...");
+
+    const result =
+      await window.liveAPI.savePreset(preset);
+
+    if (result.success) {
+      setPresetStatus("Configurações salvas com sucesso.");
+    } else {
+      setPresetStatus(
+        result.error ?? "Erro ao salvar configurações."
+      );
+    }
+  }
+
+  function clearEvents() {
+    setEvents([]);
   }
 
   function formatGameAction(action: GameAction) {
     if (action.type === "chat") {
-      return `${action.message ?? ""}`;
+      return action.message ?? "";
     }
 
     if (action.type === "like") {
@@ -223,7 +322,9 @@ function App() {
 
         <nav className="menu">
           <button
-            className={`menu-item ${page === "dashboard" ? "active" : ""}`}
+            className={`menu-item ${
+              page === "dashboard" ? "active" : ""
+            }`}
             onClick={() => setPage("dashboard")}
           >
             Dashboard
@@ -234,13 +335,20 @@ function App() {
           </button>
 
           <button
-            className={`menu-item ${page === "events" ? "active" : ""}`}
+            className={`menu-item ${
+              page === "events" ? "active" : ""
+            }`}
             onClick={() => setPage("events")}
           >
             Eventos
           </button>
 
-          <button className="menu-item">
+          <button
+            className={`menu-item ${
+              page === "settings" ? "active" : ""
+            }`}
+            onClick={() => setPage("settings")}
+          >
             Configurações
           </button>
         </nav>
@@ -253,11 +361,17 @@ function App() {
           <>
             <header className="topbar">
               <div>
-                <p className="eyebrow">PAINEL PRINCIPAL</p>
+                <p className="eyebrow">
+                  PAINEL PRINCIPAL
+                </p>
                 <h2>Controle da Live</h2>
               </div>
 
-              <div className={`status ${connected ? "online" : "offline"}`}>
+              <div
+                className={`status ${
+                  connected ? "online" : "offline"
+                }`}
+              >
                 <span className="status-dot"></span>
                 {statusMessage}
               </div>
@@ -265,11 +379,15 @@ function App() {
 
             <section className="connection-card">
               <div>
-                <p className="eyebrow">TIKTOK LIVE</p>
+                <p className="eyebrow">
+                  TIKTOK LIVE
+                </p>
+
                 <h3>Conectar à transmissão</h3>
 
                 <p className="description">
-                  Informe o usuário da conta que estará transmitindo.
+                  Informe o usuário da conta que estará
+                  transmitindo.
                 </p>
               </div>
 
@@ -277,15 +395,11 @@ function App() {
                 <input
                   type="text"
                   placeholder="@usuario"
-                  aria-label="Usuário do TikTok"
                   value={username}
                   disabled={connected || connecting}
-                  onChange={(event) => setUsername(event.target.value)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" && !connected) {
-                      handleConnect();
-                    }
-                  }}
+                  onChange={(event) =>
+                    setUsername(event.target.value)
+                  }
                 />
 
                 {!connected ? (
@@ -294,7 +408,9 @@ function App() {
                     onClick={handleConnect}
                     disabled={connecting}
                   >
-                    {connecting ? "Conectando..." : "Conectar"}
+                    {connecting
+                      ? "Conectando..."
+                      : "Conectar"}
                   </button>
                 ) : (
                   <button
@@ -310,7 +426,9 @@ function App() {
             <section className="stats">
               <div className="stat-card">
                 <span>Status</span>
-                <strong>{connected ? "Online" : "Offline"}</strong>
+                <strong>
+                  {connected ? "Online" : "Offline"}
+                </strong>
               </div>
 
               <div className="stat-card">
@@ -340,14 +458,15 @@ function App() {
               <div className="game-grid">
                 <article className="game-card">
                   <div className="game-preview">
-                    <span>ROBLOX</span>
+                    <span>AVATAR RUNNER</span>
                   </div>
 
                   <div className="game-info">
                     <h4>Avatar Live</h4>
 
                     <p>
-                      Personagem automático preparado para reagir aos eventos da live.
+                      Personagem automático preparado para
+                      reagir aos eventos da live.
                     </p>
 
                     <button
@@ -368,10 +487,14 @@ function App() {
                     <h4>Game 02</h4>
 
                     <p>
-                      Espaço reservado para nosso próximo jogo interativo.
+                      Espaço reservado para nosso próximo
+                      jogo interativo.
                     </p>
 
-                    <button className="secondary-button" disabled>
+                    <button
+                      className="secondary-button"
+                      disabled
+                    >
                       Indisponível
                     </button>
                   </div>
@@ -382,8 +505,13 @@ function App() {
             <section className="actions-panel">
               <div className="section-header">
                 <div>
-                  <p className="eyebrow">MOTOR DE AÇÕES</p>
-                  <h3>Últimas ações processadas</h3>
+                  <p className="eyebrow">
+                    MOTOR DE AÇÕES
+                  </p>
+
+                  <h3>
+                    Últimas ações processadas
+                  </h3>
                 </div>
               </div>
 
@@ -393,22 +521,33 @@ function App() {
                     Nenhuma ação processada ainda.
                   </div>
                 ) : (
-                  gameActions.slice(0, 8).map((action) => (
-                    <div className="action-row" key={action.id}>
-                      <div className="action-type">
-                        {action.type.toUpperCase()}
-                      </div>
+                  gameActions
+                    .slice(0, 8)
+                    .map((action) => (
+                      <div
+                        className="action-row"
+                        key={action.id}
+                      >
+                        <div className="action-type">
+                          {action.type.toUpperCase()}
+                        </div>
 
-                      <div className="action-content">
-                        <strong>@{action.username ?? "desconhecido"}</strong>
-                        <span>{formatGameAction(action)}</span>
-                      </div>
+                        <div className="action-content">
+                          <strong>
+                            @{action.username ??
+                              "desconhecido"}
+                          </strong>
 
-                      <div className="action-time">
-                        {action.time}
+                          <span>
+                            {formatGameAction(action)}
+                          </span>
+                        </div>
+
+                        <div className="action-time">
+                          {action.time}
+                        </div>
                       </div>
-                    </div>
-                  ))
+                    ))
                 )}
               </div>
             </section>
@@ -419,13 +558,10 @@ function App() {
           <>
             <header className="topbar">
               <div>
-                <p className="eyebrow">MONITORAMENTO</p>
+                <p className="eyebrow">
+                  MONITORAMENTO
+                </p>
                 <h2>Eventos da Live</h2>
-              </div>
-
-              <div className={`status ${connected ? "online" : "offline"}`}>
-                <span className="status-dot"></span>
-                {connected ? "Recebendo eventos" : "Desconectado"}
               </div>
             </header>
 
@@ -433,7 +569,10 @@ function App() {
               <div className="events-header">
                 <div>
                   <h3>Eventos em tempo real</h3>
-                  <p>Últimos eventos recebidos da transmissão.</p>
+                  <p>
+                    Últimos eventos recebidos da
+                    transmissão.
+                  </p>
                 </div>
 
                 <button
@@ -451,14 +590,24 @@ function App() {
                   </div>
                 ) : (
                   events.map((event) => (
-                    <div className="event-row" key={event.id}>
-                      <div className={`event-type ${event.type}`}>
+                    <div
+                      className="event-row"
+                      key={event.id}
+                    >
+                      <div
+                        className={`event-type ${event.type}`}
+                      >
                         {event.type.toUpperCase()}
                       </div>
 
                       <div className="event-content">
-                        <strong>@{event.username}</strong>
-                        <span>{event.description}</span>
+                        <strong>
+                          @{event.username}
+                        </strong>
+
+                        <span>
+                          {event.description}
+                        </span>
                       </div>
 
                       <div className="event-time">
@@ -471,10 +620,182 @@ function App() {
             </section>
           </>
         )}
+
+        {page === "settings" && (
+          <>
+            <header className="topbar">
+              <div>
+                <p className="eyebrow">
+                  CONFIGURAÇÕES
+                </p>
+                <h2>Preset de eventos</h2>
+              </div>
+            </header>
+
+            <section className="settings-panel">
+              <div className="settings-header">
+                <h3>Ações da Live</h3>
+
+                <p>
+                  Defina como cada evento deve afetar o jogo.
+                </p>
+              </div>
+
+              <div className="settings-grid">
+                <label className="setting-field">
+                  <span>Likes</span>
+
+                  <select
+                    value={likeAction}
+                    onChange={(event) =>
+                      setLikeAction(event.target.value)
+                    }
+                  >
+                    <option value="jump">
+                      Pular
+                    </option>
+
+                    <option value="danceShort">
+                      Dança curta
+                    </option>
+
+                    <option value="danceSpecial">
+                      Dança especial
+                    </option>
+
+                    <option value="giftReaction">
+                      Reação
+                    </option>
+                  </select>
+                </label>
+
+                <label className="setting-field">
+                  <span>Comentários</span>
+
+                  <select
+                    value={chatAction}
+                    onChange={(event) =>
+                      setChatAction(event.target.value)
+                    }
+                  >
+                    <option value="showMessage">
+                      Mostrar mensagem
+                    </option>
+
+                    <option value="jump">
+                      Pular
+                    </option>
+
+                    <option value="danceShort">
+                      Dança curta
+                    </option>
+                  </select>
+                </label>
+
+                <label className="setting-field">
+                  <span>Rose</span>
+
+                  <select
+                    value={roseAction}
+                    onChange={(event) =>
+                      setRoseAction(event.target.value)
+                    }
+                  >
+                    <option value="danceShort">
+                      Dança curta
+                    </option>
+
+                    <option value="danceSpecial">
+                      Dança especial
+                    </option>
+
+                    <option value="jump">
+                      Pular
+                    </option>
+
+                    <option value="giftReaction">
+                      Reação
+                    </option>
+                  </select>
+                </label>
+
+                <label className="setting-field">
+                  <span>TikTok</span>
+
+                  <select
+                    value={tiktokAction}
+                    onChange={(event) =>
+                      setTikTokAction(
+                        event.target.value
+                      )
+                    }
+                  >
+                    <option value="danceSpecial">
+                      Dança especial
+                    </option>
+
+                    <option value="danceShort">
+                      Dança curta
+                    </option>
+
+                    <option value="jump">
+                      Pular
+                    </option>
+
+                    <option value="giftReaction">
+                      Reação
+                    </option>
+                  </select>
+                </label>
+
+                <label className="setting-field">
+                  <span>Outros presentes</span>
+
+                  <select
+                    value={defaultGiftAction}
+                    onChange={(event) =>
+                      setDefaultGiftAction(
+                        event.target.value
+                      )
+                    }
+                  >
+                    <option value="giftReaction">
+                      Reação padrão
+                    </option>
+
+                    <option value="danceShort">
+                      Dança curta
+                    </option>
+
+                    <option value="danceSpecial">
+                      Dança especial
+                    </option>
+
+                    <option value="jump">
+                      Pular
+                    </option>
+                  </select>
+                </label>
+              </div>
+
+              <div className="settings-footer">
+                <span className="preset-status">
+                  {presetStatus}
+                </span>
+
+                <button
+                  className="primary-button"
+                  onClick={handleSavePreset}
+                >
+                  Salvar configurações
+                </button>
+              </div>
+            </section>
+          </>
+        )}
       </main>
     </div>
   );
 }
 
 export default App;
-

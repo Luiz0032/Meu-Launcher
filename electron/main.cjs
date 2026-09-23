@@ -15,6 +15,11 @@ const {
   setupDefaultRules
 } = require("./services/default-rules.cjs");
 
+const {
+  loadPreset,
+  savePreset
+} = require("./services/preset-loader.cjs");
+
 let mainWindow = null;
 let gameWindow = null;
 
@@ -97,6 +102,30 @@ ipcMain.handle("game:open", async () => {
       error: error?.message ?? String(error)
     };
   }
+});
+
+ipcMain.handle("preset:get", async () => {
+  try {
+    return {
+      success: true,
+      preset: loadPreset()
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
+
+ipcMain.handle("preset:save", async (_event, preset) => {
+  const result = savePreset(preset);
+
+  if (result.success) {
+    configureActionEngine();
+  }
+
+  return result;
 });
 
 ipcMain.handle("tiktok:connect", async (_event, username) => {

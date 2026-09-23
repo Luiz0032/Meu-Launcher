@@ -1,23 +1,19 @@
-﻿{
+{
   "like": {
     "action": "jump"
   },
-
   "chat": {
-    "action": "showMessage"
+    "action": "danceShort"
   },
-
   "gifts": {
     "Rose": {
-      "action": "danceShort"
+      "action": "giftReaction"
     },
-
     "TikTok": {
       "action": "danceSpecial"
     },
-
     "default": {
-      "action": "giftReaction"
+      "action": "danceSpecial"
     }
   }
 }

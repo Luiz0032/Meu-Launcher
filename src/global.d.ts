@@ -1,5 +1,21 @@
 ﻿export {};
 
+type PresetConfig = {
+  like: {
+    action: string;
+  };
+
+  chat: {
+    action: string;
+  };
+
+  gifts: {
+    [giftName: string]: {
+      action: string;
+    };
+  };
+};
+
 declare global {
   interface Window {
     liveAPI: {
@@ -16,6 +32,17 @@ declare global {
       }>;
 
       openGame: () => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
+
+      getPreset: () => Promise<{
+        success: boolean;
+        preset?: PresetConfig;
+        error?: string;
+      }>;
+
+      savePreset: (preset: PresetConfig) => Promise<{
         success: boolean;
         error?: string;
       }>;
