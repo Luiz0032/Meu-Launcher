@@ -1,7 +1,8 @@
 ﻿const fs = require("fs");
 const path = require("path");
+const { app } = require("electron");
 
-const DEFAULT_PRESET_PATH = path.join(
+const BUNDLED_PRESET_PATH = path.join(
   __dirname,
   "..",
   "config",
@@ -22,13 +23,58 @@ const FALLBACK_PRESET = {
   }
 };
 
+function getUserPresetPath() {
+  return path.join(
+    app.getPath("userData"),
+    "preset.json"
+  );
+}
+
+function ensureUserPreset() {
+  const userPresetPath = getUserPresetPath();
+
+  if (fs.existsSync(userPresetPath)) {
+    return userPresetPath;
+  }
+
+  fs.mkdirSync(
+    path.dirname(userPresetPath),
+    {
+      recursive: true
+    }
+  );
+
+  if (fs.existsSync(BUNDLED_PRESET_PATH)) {
+    fs.copyFileSync(
+      BUNDLED_PRESET_PATH,
+      userPresetPath
+    );
+  } else {
+    fs.writeFileSync(
+      userPresetPath,
+      JSON.stringify(FALLBACK_PRESET, null, 2),
+      "utf8"
+    );
+  }
+
+  return userPresetPath;
+}
+
 function loadPreset() {
   try {
-    const content = fs.readFileSync(DEFAULT_PRESET_PATH, "utf8");
+    const userPresetPath = ensureUserPreset();
+
+    const content = fs.readFileSync(
+      userPresetPath,
+      "utf8"
+    );
 
     return JSON.parse(content);
   } catch (error) {
-    console.error("[Preset] Erro ao carregar preset:", error);
+    console.error(
+      "[Preset] Erro ao carregar preset:",
+      error
+    );
 
     return FALLBACK_PRESET;
   }
@@ -36,21 +82,26 @@ function loadPreset() {
 
 function savePreset(preset) {
   try {
-    const content = JSON.stringify(preset, null, 2);
+    const userPresetPath = ensureUserPreset();
 
     fs.writeFileSync(
-      DEFAULT_PRESET_PATH,
-      content,
+      userPresetPath,
+      JSON.stringify(preset, null, 2),
       "utf8"
     );
 
-    console.log("[Preset] Configuração salva.");
+    console.log(
+      `[Preset] Configuração salva em: ${userPresetPath}`
+    );
 
     return {
       success: true
     };
   } catch (error) {
-    console.error("[Preset] Erro ao salvar preset:", error);
+    console.error(
+      "[Preset] Erro ao salvar preset:",
+      error
+    );
 
     return {
       success: false,

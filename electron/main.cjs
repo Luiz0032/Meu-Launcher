@@ -36,7 +36,13 @@ function createWindow() {
     }
   });
 
-  mainWindow.loadURL("http://localhost:5173");
+  if (app.isPackaged) {
+    mainWindow.loadFile(
+      path.join(__dirname, "..", "dist", "index.html")
+    );
+  } else {
+    mainWindow.loadURL("http://localhost:5173");
+  }
 
   mainWindow.on("closed", () => {
     mainWindow = null;
@@ -62,7 +68,13 @@ function createGameWindow() {
     }
   });
 
-  gameWindow.loadURL("http://localhost:5173/game.html");
+  if (app.isPackaged) {
+    gameWindow.loadFile(
+      path.join(__dirname, "..", "dist", "game.html")
+    );
+  } else {
+    gameWindow.loadURL("http://localhost:5173/game.html");
+  }
 
   gameWindow.on("closed", () => {
     gameWindow = null;
@@ -193,5 +205,6 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
 
 
