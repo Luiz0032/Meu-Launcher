@@ -24,7 +24,8 @@
   "homepage": "https://github.com/Luiz0032/Meu-Launcher#readme",
   "dependencies": {
     "react": "^19.3.0",
-    "react-dom": "^19.3.0"
+    "react-dom": "^19.3.0",
+    "tiktok-live-connector": "^2.5.0"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
