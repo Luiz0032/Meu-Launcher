@@ -1,20 +1,6 @@
-﻿export {};
+﻿import type { PresetConfig } from "./types/preset";
 
-type PresetConfig = {
-  like: {
-    action: string;
-  };
-
-  chat: {
-    action: string;
-  };
-
-  gifts: {
-    [giftName: string]: {
-      action: string;
-    };
-  };
-};
+export {};
 
 declare global {
   interface Window {

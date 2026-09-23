@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld("liveAPI", {
     return ipcRenderer.invoke("tiktok:disconnect");
   },
 
+
   openGame: () => {
     return ipcRenderer.invoke("game:open");
   },
@@ -45,3 +46,5 @@ contextBridge.exposeInMainWorld("liveAPI", {
     };
   }
 });
+
+

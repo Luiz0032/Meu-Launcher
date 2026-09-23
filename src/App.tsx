@@ -102,6 +102,46 @@ function App() {
           );
         }
 
+        if (type === "connection_lost") {
+          setConnected(false);
+          setConnecting(true);
+          setStatusMessage("Conexão perdida");
+        }
+
+        if (type === "reconnecting") {
+          setConnected(false);
+          setConnecting(true);
+
+          setStatusMessage(
+            `Reconectando... ${data.attempt}/${data.maxAttempts}`
+          );
+        }
+
+        if (type === "reconnected") {
+          setConnected(true);
+          setConnecting(false);
+
+          setStatusMessage(
+            `Reconectado em @${data.username}`
+          );
+        }
+
+        if (type === "reconnect_error") {
+          console.error(
+            "Erro na reconexão:",
+            data.message
+          );
+        }
+
+        if (type === "reconnect_failed") {
+          setConnected(false);
+          setConnecting(false);
+          setStatusMessage(
+            "Não foi possível reconectar"
+          );
+          setStartTime(null);
+        }
+
         if (type === "disconnected") {
           setConnected(false);
           setConnecting(false);
@@ -213,6 +253,7 @@ function App() {
     setStatusMessage("Desconectado");
     setStartTime(null);
   }
+
 
   async function handleOpenGame() {
     const result = await window.liveAPI.openGame();
@@ -375,12 +416,14 @@ function App() {
                       : "Conectar"}
                   </button>
                 ) : (
-                  <button
-                    className="primary-button"
-                    onClick={handleDisconnect}
-                  >
-                    Desconectar
-                  </button>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                      className="primary-button"
+                      onClick={handleDisconnect}
+                    >
+                      Desconectar
+                    </button>
+                  </div>
                 )}
               </div>
             </section>
@@ -601,6 +644,13 @@ function App() {
 }
 
 export default App;
+
+
+
+
+
+
+
 
 
 

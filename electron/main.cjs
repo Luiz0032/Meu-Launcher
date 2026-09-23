@@ -87,6 +87,7 @@ function configureActionEngine() {
   setupDefaultRules();
 }
 
+
 ipcMain.handle("game:open", async () => {
   try {
     createGameWindow();
@@ -192,3 +193,5 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
