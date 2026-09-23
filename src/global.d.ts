@@ -15,6 +15,11 @@ declare global {
         error?: string;
       }>;
 
+      openGame: () => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
+
       onTikTokEvent: (
         callback: (type: string, data: any) => void
       ) => () => void;

@@ -1,0 +1,233 @@
+﻿* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#game-root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #0a0d12;
+  color: #ffffff;
+  overflow: hidden;
+}
+
+.game {
+  min-height: 100vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(255,255,255,0.06), transparent 28%),
+    #0a0d12;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 32px;
+  border-bottom: 1px solid #1d2330;
+  background: rgba(15, 19, 27, 0.92);
+}
+
+.game-header span {
+  display: block;
+  color: #687287;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.8px;
+}
+
+.game-header h1 {
+  margin: 5px 0 0;
+  font-size: 26px;
+}
+
+.live-badge {
+  padding: 9px 14px;
+  border-radius: 999px;
+  border: 1px solid #2e3746;
+  background: #171c25;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+
+.game-area {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 40px;
+}
+
+.platform {
+  position: relative;
+  width: min(900px, 90vw);
+  height: min(500px, 60vh);
+  border: 1px solid #202735;
+  border-radius: 24px;
+  overflow: hidden;
+  background:
+    linear-gradient(to bottom, #111722 0%, #0d121a 72%, #171d27 72%, #171d27 100%);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+}
+
+.platform::before {
+  content: "";
+  position: absolute;
+  left: -10%;
+  bottom: 28%;
+  width: 120%;
+  height: 2px;
+  background: #252e3d;
+}
+
+.character {
+  position: absolute;
+  left: 50%;
+  bottom: 28%;
+  width: 90px;
+  height: 150px;
+  transform: translateX(-50%);
+  animation: idle 1.8s ease-in-out infinite;
+}
+
+.character-head {
+  position: absolute;
+  top: 0;
+  left: 24px;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: #f2f4f8;
+}
+
+.character-body {
+  position: absolute;
+  left: 15px;
+  bottom: 0;
+  width: 60px;
+  height: 100px;
+  border-radius: 18px 18px 12px 12px;
+  background: #d9dee7;
+}
+
+.character-body::before,
+.character-body::after {
+  content: "";
+  position: absolute;
+  top: 18px;
+  width: 18px;
+  height: 65px;
+  border-radius: 10px;
+  background: #d9dee7;
+}
+
+.character-body::before {
+  left: -14px;
+  transform: rotate(8deg);
+}
+
+.character-body::after {
+  right: -14px;
+  transform: rotate(-8deg);
+}
+
+.message-box {
+  position: absolute;
+  bottom: 50px;
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 320px;
+  max-width: 80%;
+  padding: 14px 18px;
+  border-radius: 12px;
+  text-align: center;
+  color: #aeb6c8;
+  background: rgba(11, 14, 20, 0.88);
+  border: 1px solid #262d3a;
+  backdrop-filter: blur(10px);
+}
+
+.game-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: #1d2330;
+  border-top: 1px solid #1d2330;
+}
+
+.game-stats > div {
+  padding: 18px 24px;
+  background: #10151d;
+}
+
+.game-stats span {
+  display: block;
+  margin-bottom: 6px;
+  color: #687287;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.game-stats strong {
+  font-size: 20px;
+}
+
+@keyframes idle {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  50% {
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+
+.character.jumping {
+  animation: jump 0.5s ease;
+}
+
+.character.special-action {
+  animation: specialAction 0.9s ease;
+}
+
+@keyframes jump {
+  0% {
+    transform: translateX(-50%) translateY(0);
+  }
+
+  45% {
+    transform: translateX(-50%) translateY(-90px);
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+@keyframes specialAction {
+  0% {
+    transform: translateX(-50%) scale(1);
+  }
+
+  25% {
+    transform: translateX(-50%) scale(1.2) rotate(-8deg);
+  }
+
+  50% {
+    transform: translateX(-50%) scale(1.28) rotate(8deg);
+  }
+
+  75% {
+    transform: translateX(-50%) scale(1.15) rotate(-4deg);
+  }
+
+  100% {
+    transform: translateX(-50%) scale(1) rotate(0);
+  }
+}

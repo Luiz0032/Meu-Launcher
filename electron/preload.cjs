@@ -9,6 +9,10 @@ contextBridge.exposeInMainWorld("liveAPI", {
     return ipcRenderer.invoke("tiktok:disconnect");
   },
 
+  openGame: () => {
+    return ipcRenderer.invoke("game:open");
+  },
+
   onTikTokEvent: (callback) => {
     const listener = (_event, type, data) => {
       callback(type, data);

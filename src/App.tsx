@@ -185,6 +185,14 @@ function App() {
     setEvents([]);
   }
 
+  async function handleOpenGame() {
+    const result = await window.liveAPI.openGame();
+
+    if (!result.success) {
+      console.error("Erro ao abrir jogo:", result.error);
+    }
+  }
+
   function formatGameAction(action: GameAction) {
     if (action.type === "chat") {
       return `${action.message ?? ""}`;
@@ -342,8 +350,11 @@ function App() {
                       Personagem automático preparado para reagir aos eventos da live.
                     </p>
 
-                    <button className="secondary-button">
-                      Selecionar
+                    <button
+                      className="secondary-button"
+                      onClick={handleOpenGame}
+                    >
+                      Abrir jogo
                     </button>
                   </div>
                 </article>
@@ -466,3 +477,4 @@ function App() {
 }
 
 export default App;
+

@@ -16,6 +16,7 @@ const {
 } = require("./services/default-rules.cjs");
 
 let mainWindow = null;
+let gameWindow = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -37,10 +38,41 @@ function createWindow() {
   });
 }
 
-function emitGameAction(action) {
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.webContents.send("game:action", action);
+function createGameWindow() {
+  if (gameWindow && !gameWindow.isDestroyed()) {
+    gameWindow.focus();
+    return;
   }
+
+  gameWindow = new BrowserWindow({
+    width: 1100,
+    height: 750,
+    minWidth: 800,
+    minHeight: 600,
+    title: "Avatar Runner",
+    webPreferences: {
+      preload: path.join(__dirname, "preload.cjs"),
+      contextIsolation: true,
+      nodeIntegration: false
+    }
+  });
+
+  gameWindow.loadURL("http://localhost:5173/game.html");
+
+  gameWindow.on("closed", () => {
+    gameWindow = null;
+  });
+}
+
+function sendToWindow(window, channel, ...args) {
+  if (window && !window.isDestroyed()) {
+    window.webContents.send(channel, ...args);
+  }
+}
+
+function emitGameAction(action) {
+  sendToWindow(mainWindow, "game:action", action);
+  sendToWindow(gameWindow, "game:action", action);
 
   console.log("[GameAction]", action);
 }
@@ -50,14 +82,29 @@ function configureActionEngine() {
   setupDefaultRules();
 }
 
+ipcMain.handle("game:open", async () => {
+  try {
+    createGameWindow();
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error("Erro ao abrir jogo:", error);
+
+    return {
+      success: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
+
 ipcMain.handle("tiktok:connect", async (_event, username) => {
   try {
     configureActionEngine();
 
     const result = await connectTikTok(username, async (type, data) => {
-      if (mainWindow && !mainWindow.isDestroyed()) {
-        mainWindow.webContents.send("tiktok:event", type, data);
-      }
+      sendToWindow(mainWindow, "tiktok:event", type, data);
 
       await processEvent(type, data, {
         emitGameAction
