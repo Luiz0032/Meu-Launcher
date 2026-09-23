@@ -327,3 +327,136 @@ button {
     flex-direction: column;
   }
 }
+
+.events-panel {
+  background: #11151d;
+  border: 1px solid #1e2430;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.events-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 20px;
+  border-bottom: 1px solid #1e2430;
+}
+
+.events-header h3 {
+  margin: 0 0 6px;
+}
+
+.events-header p {
+  margin: 0;
+  color: #737c90;
+  font-size: 13px;
+}
+
+.clear-events-button {
+  width: auto;
+  min-width: 100px;
+}
+
+.events-list {
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+
+.empty-events {
+  padding: 50px 20px;
+  text-align: center;
+  color: #656e81;
+}
+
+.event-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 90px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-bottom: 1px solid #1b202b;
+}
+
+.event-row:last-child {
+  border-bottom: 0;
+}
+
+.event-row:hover {
+  background: #151a23;
+}
+
+.event-type {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  text-align: center;
+  background: #1b202b;
+  color: #aeb5c5;
+}
+
+.event-type.chat {
+  background: #172031;
+}
+
+.event-type.like {
+  background: #261c29;
+}
+
+.event-type.gift {
+  background: #292318;
+}
+
+.event-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.event-content strong {
+  font-size: 13px;
+  color: #f5f7fb;
+}
+
+.event-content span {
+  color: #8992a5;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.event-time {
+  color: #5d6678;
+  font-size: 12px;
+  text-align: right;
+}
+
+.events-list::-webkit-scrollbar {
+  width: 8px;
+}
+
+.events-list::-webkit-scrollbar-track {
+  background: #0f131a;
+}
+
+.events-list::-webkit-scrollbar-thumb {
+  background: #2a3140;
+  border-radius: 999px;
+}
+
+.events-list::-webkit-scrollbar-thumb:hover {
+  background: #353d4e;
+}
+
+@media (max-width: 760px) {
+  .event-row {
+    grid-template-columns: 70px 1fr;
+  }
+
+  .event-time {
+    display: none;
+  }
+}
