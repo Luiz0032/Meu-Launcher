@@ -27,6 +27,7 @@ declare global {
       onGameAction: (
         callback: (action: {
           type: string;
+          action?: string;
           username?: string;
           amount?: number;
           message?: string;

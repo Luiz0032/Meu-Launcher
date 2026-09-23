@@ -6,16 +6,21 @@ function Game() {
   const [message, setMessage] = useState("Aguardando eventos da live...");
   const [jumps, setJumps] = useState(0);
   const [gifts, setGifts] = useState(0);
+
   const [jumping, setJumping] = useState(false);
-  const [specialAction, setSpecialAction] = useState(false);
+  const [danceShort, setDanceShort] = useState(false);
+  const [danceSpecial, setDanceSpecial] = useState(false);
+  const [giftReaction, setGiftReaction] = useState(false);
 
   useEffect(() => {
-    const removeListener = window.liveAPI.onGameAction((action) => {
-      if (action.type === "like") {
+    const removeListener = window.liveAPI.onGameAction((event) => {
+      console.log("Ação recebida pelo jogo:", event);
+
+      if (event.action === "jump") {
         setJumps((value) => value + 1);
 
         setMessage(
-          `@${action.username ?? "usuário"} enviou likes`
+          `@${event.username ?? "usuário"} enviou likes`
         );
 
         setJumping(false);
@@ -27,33 +32,75 @@ function Game() {
             setJumping(false);
           }, 500);
         });
+
+        return;
       }
 
-      if (action.type === "chat") {
+      if (event.action === "showMessage") {
         setMessage(
-          `@${action.username ?? "usuário"}: ${action.message ?? ""}`
+          `@${event.username ?? "usuário"}: ${event.message ?? ""}`
         );
+
+        return;
       }
 
-      if (action.type === "gift") {
-        const amount = action.amount ?? 1;
+      if (event.type === "gift") {
+        setGifts((value) => value + (event.amount ?? 1));
+      }
 
-        setGifts((value) => value + amount);
-
+      if (event.action === "danceShort") {
         setMessage(
-          `@${action.username ?? "usuário"} enviou ${action.giftName ?? "um presente"} x${amount}`
+          `@${event.username ?? "usuário"} enviou ${event.giftName ?? "um presente"}`
         );
 
-        setSpecialAction(true);
+        setDanceShort(true);
 
         window.setTimeout(() => {
-          setSpecialAction(false);
+          setDanceShort(false);
+        }, 1200);
+
+        return;
+      }
+
+      if (event.action === "danceSpecial") {
+        setMessage(
+          `@${event.username ?? "usuário"} ativou uma dança especial!`
+        );
+
+        setDanceSpecial(true);
+
+        window.setTimeout(() => {
+          setDanceSpecial(false);
+        }, 1800);
+
+        return;
+      }
+
+      if (event.action === "giftReaction") {
+        setMessage(
+          `@${event.username ?? "usuário"} enviou ${event.giftName ?? "um presente"} x${event.amount ?? 1}`
+        );
+
+        setGiftReaction(true);
+
+        window.setTimeout(() => {
+          setGiftReaction(false);
         }, 900);
       }
     });
 
     return removeListener;
   }, []);
+
+  const characterClasses = [
+    "character",
+    jumping ? "jumping" : "",
+    danceShort ? "dance-short" : "",
+    danceSpecial ? "dance-special" : "",
+    giftReaction ? "gift-reaction" : ""
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <main className="game">
@@ -70,15 +117,7 @@ function Game() {
 
       <section className="game-area">
         <div className="platform">
-          <div
-            className={[
-              "character",
-              jumping ? "jumping" : "",
-              specialAction ? "special-action" : ""
-            ]
-              .filter(Boolean)
-              .join(" ")}
-          >
+          <div className={characterClasses}>
             <div className="character-head"></div>
             <div className="character-body"></div>
           </div>
