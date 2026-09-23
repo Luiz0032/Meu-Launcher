@@ -1,39 +1,8 @@
 ﻿import { useEffect, useState } from "react";
+import type { PresetConfig, PresetAction } from "./types/preset";
+import SettingsPanel from "./components/SettingsPanel";
+import type { LiveEvent, GameAction } from "./types/live";
 import "./styles.css";
-
-type LiveEvent = {
-  id: number;
-  type: string;
-  username: string;
-  description: string;
-  time: string;
-};
-
-type GameAction = {
-  id: number;
-  type: string;
-  action?: string;
-  username?: string;
-  amount?: number;
-  message?: string;
-  giftId?: number;
-  giftName?: string;
-  time: string;
-};
-
-type PresetConfig = {
-  like: {
-    action: string;
-  };
-  chat: {
-    action: string;
-  };
-  gifts: {
-    [giftName: string]: {
-      action: string;
-    };
-  };
-};
 
 function App() {
   const [page, setPage] = useState<
@@ -53,12 +22,19 @@ function App() {
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
 
-  const [likeAction, setLikeAction] = useState("jump");
-  const [chatAction, setChatAction] = useState("showMessage");
-  const [roseAction, setRoseAction] = useState("danceShort");
-  const [tiktokAction, setTikTokAction] = useState("danceSpecial");
-  const [defaultGiftAction, setDefaultGiftAction] =
-    useState("giftReaction");
+  const [likeAction, setLikeAction] = useState<PresetAction>("jump");
+  const [chatAction, setChatAction] = useState<PresetAction>("showMessage");
+  const [gifts, setGifts] = useState<PresetConfig["gifts"]>({
+    Rose: {
+      action: "danceShort"
+    },
+    TikTok: {
+      action: "danceSpecial"
+    },
+    default: {
+      action: "giftReaction"
+    }
+  });
 
   const [presetStatus, setPresetStatus] = useState("");
 
@@ -73,16 +49,12 @@ function App() {
       setLikeAction(result.preset.like?.action ?? "jump");
       setChatAction(result.preset.chat?.action ?? "showMessage");
 
-      setRoseAction(
-        result.preset.gifts?.Rose?.action ?? "danceShort"
-      );
-
-      setTikTokAction(
-        result.preset.gifts?.TikTok?.action ?? "danceSpecial"
-      );
-
-      setDefaultGiftAction(
-        result.preset.gifts?.default?.action ?? "giftReaction"
+      setGifts(
+        result.preset.gifts ?? {
+          default: {
+            action: "giftReaction"
+          }
+        }
       );
     }
 
@@ -261,17 +233,7 @@ function App() {
       chat: {
         action: chatAction
       },
-      gifts: {
-        Rose: {
-          action: roseAction
-        },
-        TikTok: {
-          action: tiktokAction
-        },
-        default: {
-          action: defaultGiftAction
-        }
-      }
+      gifts
     };
 
     setPresetStatus("Salvando...");
@@ -622,176 +584,16 @@ function App() {
         )}
 
         {page === "settings" && (
-          <>
-            <header className="topbar">
-              <div>
-                <p className="eyebrow">
-                  CONFIGURAÇÕES
-                </p>
-                <h2>Preset de eventos</h2>
-              </div>
-            </header>
-
-            <section className="settings-panel">
-              <div className="settings-header">
-                <h3>Ações da Live</h3>
-
-                <p>
-                  Defina como cada evento deve afetar o jogo.
-                </p>
-              </div>
-
-              <div className="settings-grid">
-                <label className="setting-field">
-                  <span>Likes</span>
-
-                  <select
-                    value={likeAction}
-                    onChange={(event) =>
-                      setLikeAction(event.target.value)
-                    }
-                  >
-                    <option value="jump">
-                      Pular
-                    </option>
-
-                    <option value="danceShort">
-                      Dança curta
-                    </option>
-
-                    <option value="danceSpecial">
-                      Dança especial
-                    </option>
-
-                    <option value="giftReaction">
-                      Reação
-                    </option>
-                  </select>
-                </label>
-
-                <label className="setting-field">
-                  <span>Comentários</span>
-
-                  <select
-                    value={chatAction}
-                    onChange={(event) =>
-                      setChatAction(event.target.value)
-                    }
-                  >
-                    <option value="showMessage">
-                      Mostrar mensagem
-                    </option>
-
-                    <option value="jump">
-                      Pular
-                    </option>
-
-                    <option value="danceShort">
-                      Dança curta
-                    </option>
-                  </select>
-                </label>
-
-                <label className="setting-field">
-                  <span>Rose</span>
-
-                  <select
-                    value={roseAction}
-                    onChange={(event) =>
-                      setRoseAction(event.target.value)
-                    }
-                  >
-                    <option value="danceShort">
-                      Dança curta
-                    </option>
-
-                    <option value="danceSpecial">
-                      Dança especial
-                    </option>
-
-                    <option value="jump">
-                      Pular
-                    </option>
-
-                    <option value="giftReaction">
-                      Reação
-                    </option>
-                  </select>
-                </label>
-
-                <label className="setting-field">
-                  <span>TikTok</span>
-
-                  <select
-                    value={tiktokAction}
-                    onChange={(event) =>
-                      setTikTokAction(
-                        event.target.value
-                      )
-                    }
-                  >
-                    <option value="danceSpecial">
-                      Dança especial
-                    </option>
-
-                    <option value="danceShort">
-                      Dança curta
-                    </option>
-
-                    <option value="jump">
-                      Pular
-                    </option>
-
-                    <option value="giftReaction">
-                      Reação
-                    </option>
-                  </select>
-                </label>
-
-                <label className="setting-field">
-                  <span>Outros presentes</span>
-
-                  <select
-                    value={defaultGiftAction}
-                    onChange={(event) =>
-                      setDefaultGiftAction(
-                        event.target.value
-                      )
-                    }
-                  >
-                    <option value="giftReaction">
-                      Reação padrão
-                    </option>
-
-                    <option value="danceShort">
-                      Dança curta
-                    </option>
-
-                    <option value="danceSpecial">
-                      Dança especial
-                    </option>
-
-                    <option value="jump">
-                      Pular
-                    </option>
-                  </select>
-                </label>
-              </div>
-
-              <div className="settings-footer">
-                <span className="preset-status">
-                  {presetStatus}
-                </span>
-
-                <button
-                  className="primary-button"
-                  onClick={handleSavePreset}
-                >
-                  Salvar configurações
-                </button>
-              </div>
-            </section>
-          </>
+          <SettingsPanel
+            likeAction={likeAction}
+            chatAction={chatAction}
+            gifts={gifts}
+            presetStatus={presetStatus}
+            setLikeAction={setLikeAction}
+            setChatAction={setChatAction}
+            setGifts={setGifts}
+            onSave={handleSavePreset}
+          />
         )}
       </main>
     </div>
@@ -799,3 +601,8 @@ function App() {
 }
 
 export default App;
+
+
+
+
+

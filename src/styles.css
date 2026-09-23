@@ -626,3 +626,101 @@ button {
     flex-direction: column;
   }
 }
+
+.gift-rules-editor {
+  border-top: 1px solid #1e2430;
+  padding: 22px;
+}
+
+.gift-rules-header {
+  margin-bottom: 18px;
+}
+
+.gift-rules-header h4 {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.gift-rules-header p {
+  margin: 0;
+  color: #737c90;
+  font-size: 13px;
+}
+
+.gift-rules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.gift-rules-empty {
+  padding: 22px;
+  text-align: center;
+  border: 1px dashed #2a3140;
+  border-radius: 10px;
+  color: #656e81;
+  font-size: 13px;
+}
+
+.gift-rule-row {
+  display: grid;
+  grid-template-columns: 1fr 220px 100px;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #222936;
+  border-radius: 10px;
+  background: #0f131a;
+}
+
+.gift-rule-name {
+  font-weight: 700;
+  color: #f2f4f8;
+  overflow-wrap: anywhere;
+}
+
+.gift-rule-row select,
+.gift-add-row select,
+.gift-add-row input {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 9px;
+  border: 1px solid #272d3a;
+  background: #0b0f15;
+  color: #f5f7fb;
+  outline: none;
+}
+
+.gift-rule-row select:focus,
+.gift-add-row select:focus,
+.gift-add-row input:focus {
+  border-color: #5c6578;
+}
+
+.gift-remove-button {
+  border: 1px solid #353b48;
+  background: #171b23;
+  color: #aab1c0;
+  border-radius: 9px;
+  padding: 11px 12px;
+  cursor: pointer;
+}
+
+.gift-remove-button:hover {
+  background: #202630;
+  color: #ffffff;
+}
+
+.gift-add-row {
+  display: grid;
+  grid-template-columns: 1fr 220px auto;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+  .gift-rule-row,
+  .gift-add-row {
+    grid-template-columns: 1fr;
+  }
+}
