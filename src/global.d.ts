@@ -18,6 +18,17 @@ declare global {
       onTikTokEvent: (
         callback: (type: string, data: any) => void
       ) => () => void;
+
+      onGameAction: (
+        callback: (action: {
+          type: string;
+          username?: string;
+          amount?: number;
+          message?: string;
+          giftId?: number;
+          giftName?: string;
+        }) => void
+      ) => () => void;
     };
   }
 }

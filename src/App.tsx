@@ -9,6 +9,17 @@ type LiveEvent = {
   time: string;
 };
 
+type GameAction = {
+  id: number;
+  type: string;
+  username?: string;
+  amount?: number;
+  message?: string;
+  giftId?: number;
+  giftName?: string;
+  time: string;
+};
+
 function App() {
   const [page, setPage] = useState<"dashboard" | "events">("dashboard");
 
@@ -20,18 +31,19 @@ function App() {
   const [giftCount, setGiftCount] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [events, setEvents] = useState<LiveEvent[]>([]);
+  const [gameActions, setGameActions] = useState<GameAction[]>([]);
 
   const [startTime, setStartTime] = useState<number | null>(null);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
 
   useEffect(() => {
-    const removeListener = window.liveAPI.onTikTokEvent((type, data) => {
+    const removeTikTokListener = window.liveAPI.onTikTokEvent((type, data) => {
       console.log("Evento TikTok:", type, data);
 
       if (type === "chat" || type === "gift" || type === "like") {
         setEventCount((value) => value + 1);
 
-        let eventUsername = data.username ?? "desconhecido";
+        const eventUsername = data.username ?? "desconhecido";
         let description = "";
 
         if (type === "chat") {
@@ -75,7 +87,24 @@ function App() {
       }
     });
 
-    return removeListener;
+    const removeGameActionListener = window.liveAPI.onGameAction((action) => {
+      console.log("Ação do jogo:", action);
+
+      const newAction: GameAction = {
+        id: Date.now() + Math.random(),
+        ...action,
+        time: new Date().toLocaleTimeString("pt-BR")
+      };
+
+      setGameActions((currentActions) =>
+        [newAction, ...currentActions].slice(0, 50)
+      );
+    });
+
+    return () => {
+      removeTikTokListener();
+      removeGameActionListener();
+    };
   }, []);
 
   useEffect(() => {
@@ -129,6 +158,7 @@ function App() {
       setGiftCount(0);
       setEventCount(0);
       setEvents([]);
+      setGameActions([]);
       setStartTime(Date.now());
 
       setStatusMessage(`Conectado em @${result.username}`);
@@ -153,6 +183,22 @@ function App() {
 
   function clearEvents() {
     setEvents([]);
+  }
+
+  function formatGameAction(action: GameAction) {
+    if (action.type === "chat") {
+      return `${action.message ?? ""}`;
+    }
+
+    if (action.type === "like") {
+      return `Quantidade: ${action.amount ?? 0}`;
+    }
+
+    if (action.type === "gift") {
+      return `${action.giftName ?? "Presente"} x${action.amount ?? 1}`;
+    }
+
+    return "Ação recebida";
   }
 
   return (
@@ -212,7 +258,6 @@ function App() {
             <section className="connection-card">
               <div>
                 <p className="eyebrow">TIKTOK LIVE</p>
-
                 <h3>Conectar à transmissão</h3>
 
                 <p className="description">
@@ -322,6 +367,40 @@ function App() {
                 </article>
               </div>
             </section>
+
+            <section className="actions-panel">
+              <div className="section-header">
+                <div>
+                  <p className="eyebrow">MOTOR DE AÇÕES</p>
+                  <h3>Últimas ações processadas</h3>
+                </div>
+              </div>
+
+              <div className="actions-list">
+                {gameActions.length === 0 ? (
+                  <div className="empty-actions">
+                    Nenhuma ação processada ainda.
+                  </div>
+                ) : (
+                  gameActions.slice(0, 8).map((action) => (
+                    <div className="action-row" key={action.id}>
+                      <div className="action-type">
+                        {action.type.toUpperCase()}
+                      </div>
+
+                      <div className="action-content">
+                        <strong>@{action.username ?? "desconhecido"}</strong>
+                        <span>{formatGameAction(action)}</span>
+                      </div>
+
+                      <div className="action-time">
+                        {action.time}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </section>
           </>
         )}
 
@@ -343,9 +422,7 @@ function App() {
               <div className="events-header">
                 <div>
                   <h3>Eventos em tempo real</h3>
-                  <p>
-                    Últimos eventos recebidos da transmissão.
-                  </p>
+                  <p>Últimos eventos recebidos da transmissão.</p>
                 </div>
 
                 <button

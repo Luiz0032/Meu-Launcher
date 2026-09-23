@@ -19,5 +19,17 @@ contextBridge.exposeInMainWorld("liveAPI", {
     return () => {
       ipcRenderer.removeListener("tiktok:event", listener);
     };
+  },
+
+  onGameAction: (callback) => {
+    const listener = (_event, action) => {
+      callback(action);
+    };
+
+    ipcRenderer.on("game:action", listener);
+
+    return () => {
+      ipcRenderer.removeListener("game:action", listener);
+    };
   }
 });

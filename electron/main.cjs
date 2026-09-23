@@ -6,6 +6,15 @@ const {
   disconnectTikTok
 } = require("./services/tiktok.cjs");
 
+const {
+  processEvent,
+  clearRules
+} = require("./services/action-engine.cjs");
+
+const {
+  setupDefaultRules
+} = require("./services/default-rules.cjs");
+
 let mainWindow = null;
 
 function createWindow() {
@@ -28,12 +37,31 @@ function createWindow() {
   });
 }
 
+function emitGameAction(action) {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("game:action", action);
+  }
+
+  console.log("[GameAction]", action);
+}
+
+function configureActionEngine() {
+  clearRules();
+  setupDefaultRules();
+}
+
 ipcMain.handle("tiktok:connect", async (_event, username) => {
   try {
-    const result = await connectTikTok(username, (type, data) => {
+    configureActionEngine();
+
+    const result = await connectTikTok(username, async (type, data) => {
       if (mainWindow && !mainWindow.isDestroyed()) {
         mainWindow.webContents.send("tiktok:event", type, data);
       }
+
+      await processEvent(type, data, {
+        emitGameAction
+      });
     });
 
     return {
@@ -69,6 +97,7 @@ ipcMain.handle("tiktok:disconnect", async () => {
 });
 
 app.whenReady().then(() => {
+  configureActionEngine();
   createWindow();
 
   app.on("activate", () => {
