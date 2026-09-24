@@ -21,6 +21,10 @@ contextBridge.exposeInMainWorld("liveAPI", {
     return ipcRenderer.invoke("tiktok:open-account");
   },
 
+  getTikTokSessionStatus: () => {
+    return ipcRenderer.invoke("tiktok:session-status");
+  },
+
   openGame: () => {
     return ipcRenderer.invoke("game:open");
   },
@@ -57,4 +61,5 @@ contextBridge.exposeInMainWorld("liveAPI", {
     };
   }
 });
+
 

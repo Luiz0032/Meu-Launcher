@@ -34,6 +34,12 @@ declare global {
         error?: string;
       }>;
 
+      getTikTokSessionStatus: () => Promise<{
+        success: boolean;
+        authenticated: boolean;
+        error?: string;
+      }>;
+
       openGame: () => Promise<{
         success: boolean;
         error?: string;
@@ -68,4 +74,5 @@ declare global {
     };
   }
 }
+
 

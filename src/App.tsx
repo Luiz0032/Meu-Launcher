@@ -14,6 +14,10 @@ function App() {
   const [connecting, setConnecting] = useState(false);
   const [statusMessage, setStatusMessage] = useState("Desconectado");
 
+  const [tiktokSessionStatus, setTikTokSessionStatus] = useState<
+    "checking" | "active" | "inactive"
+  >("checking");
+
   const [giftCount, setGiftCount] = useState(0);
   const [eventCount, setEventCount] = useState(0);
   const [events, setEvents] = useState<LiveEvent[]>([]);
@@ -61,6 +65,60 @@ function App() {
     loadPreset();
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    async function checkTikTokSession() {
+      try {
+        const result =
+          await window.liveAPI.getTikTokSessionStatus();
+
+        if (cancelled) {
+          return;
+        }
+
+        if (
+          result.success &&
+          result.authenticated
+        ) {
+          setTikTokSessionStatus("active");
+          return;
+        }
+
+        setTikTokSessionStatus("inactive");
+      } catch (error) {
+        console.error(
+          "Erro ao verificar sessão TikTok:",
+          error
+        );
+
+        if (!cancelled) {
+          setTikTokSessionStatus("inactive");
+        }
+      }
+    }
+
+    function handleWindowFocus() {
+      setTikTokSessionStatus("checking");
+      checkTikTokSession();
+    }
+
+    checkTikTokSession();
+
+    window.addEventListener(
+      "focus",
+      handleWindowFocus
+    );
+
+    return () => {
+      cancelled = true;
+
+      window.removeEventListener(
+        "focus",
+        handleWindowFocus
+      );
+    };
+  }, []);
   useEffect(() => {
     const removeTikTokListener = window.liveAPI.onTikTokEvent(
       (type, data) => {
@@ -447,12 +505,33 @@ function App() {
                   </div>
                 )}
 
-                <button
-                  className="primary-button"
-                  onClick={handleOpenTikTokAccount}
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px"
+                  }}
                 >
-                  Conta TikTok
-                </button>
+                  <button
+                    className="primary-button"
+                    onClick={handleOpenTikTokAccount}
+                  >
+                    Conta TikTok
+                  </button>
+
+                  <span
+                    style={{
+                      fontSize: "12px",
+                      opacity: 0.8
+                    }}
+                  >
+                    {tiktokSessionStatus === "checking"
+                      ? "Verificando sessão..."
+                      : tiktokSessionStatus === "active"
+                        ? "Sessão ativa"
+                        : "Sessão não encontrada"}
+                  </span>
+                </div>
               </div>
             </section>
 
@@ -672,6 +751,10 @@ function App() {
 }
 
 export default App;
+
+
+
+
 
 
 

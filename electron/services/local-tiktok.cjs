@@ -1,6 +1,7 @@
 ﻿const {
   BrowserWindow,
-  ipcMain
+  ipcMain,
+  session
 } = require("electron");
 
 const path = require("path");
@@ -758,11 +759,59 @@ function openTikTokAccountWindow() {
   };
 }
 
+async function getTikTokSessionStatus() {
+  try {
+    const tiktokSession =
+      session.fromPartition(
+        "persist:tiktok-live"
+      );
+
+    const cookies =
+      await tiktokSession.cookies.get({
+        url: "https://www.tiktok.com"
+      });
+
+    const authCookieNames =
+      new Set([
+        "sessionid",
+        "sessionid_ss",
+        "sid_tt",
+        "sid_guard"
+      ]);
+
+    const authenticated =
+      cookies.some(
+        (cookie) =>
+          authCookieNames.has(cookie.name) &&
+          Boolean(cookie.value)
+      );
+
+    return {
+      success: true,
+      authenticated
+    };
+  } catch (error) {
+    console.error(
+      "[LocalTikTok] Erro ao verificar sessão:",
+      error
+    );
+
+    return {
+      success: false,
+      authenticated: false,
+      error:
+        error?.message ??
+        String(error)
+    };
+  }
+}
 module.exports = {
   connectLocalTikTok,
   disconnectLocalTikTok,
-  openTikTokAccountWindow
+  openTikTokAccountWindow,
+  getTikTokSessionStatus
 };
+
 
 
 

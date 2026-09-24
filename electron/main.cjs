@@ -9,7 +9,8 @@ const {
 const {
   connectLocalTikTok,
   disconnectLocalTikTok,
-  openTikTokAccountWindow
+  openTikTokAccountWindow,
+  getTikTokSessionStatus
 } = require("./services/local-tiktok.cjs");
 
 const {
@@ -197,6 +198,22 @@ ipcMain.handle("tiktok:disconnect", async () => {
 
 
 
+ipcMain.handle("tiktok:session-status", async () => {
+  try {
+    return await getTikTokSessionStatus();
+  } catch (error) {
+    console.error(
+      "[LocalTikTok] Erro ao consultar sessão:",
+      error
+    );
+
+    return {
+      success: false,
+      authenticated: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
 ipcMain.handle("tiktok:open-account", async () => {
   try {
     return openTikTokAccountWindow();
@@ -291,6 +308,8 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
 
 
 
