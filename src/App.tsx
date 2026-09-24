@@ -257,6 +257,25 @@ function App() {
     setStartTime(null);
   }
 
+  async function handleOpenTikTokAccount() {
+    try {
+      const result =
+        await window.liveAPI.openTikTokAccount();
+
+      if (!result.success) {
+        setStatusMessage(
+          result.error ?? "Erro ao abrir conta TikTok"
+        );
+      }
+    } catch (error) {
+      console.error(error);
+
+      setStatusMessage(
+        "Erro ao abrir conta TikTok"
+      );
+    }
+  }
+
   async function handleOpenGame() {
     const result = await window.liveAPI.openGame();
 
@@ -427,6 +446,13 @@ function App() {
                     </button>
                   </div>
                 )}
+
+                <button
+                  className="primary-button"
+                  onClick={handleOpenTikTokAccount}
+                >
+                  Conta TikTok
+                </button>
               </div>
             </section>
 
@@ -646,6 +672,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 

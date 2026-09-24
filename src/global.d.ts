@@ -29,6 +29,11 @@ declare global {
         error?: string;
       }>;
 
+      openTikTokAccount: () => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
+
       openGame: () => Promise<{
         success: boolean;
         error?: string;
@@ -63,3 +68,4 @@ declare global {
     };
   }
 }
+

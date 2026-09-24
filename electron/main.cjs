@@ -8,7 +8,8 @@ const {
 
 const {
   connectLocalTikTok,
-  disconnectLocalTikTok
+  disconnectLocalTikTok,
+  openTikTokAccountWindow
 } = require("./services/local-tiktok.cjs");
 
 const {
@@ -196,6 +197,21 @@ ipcMain.handle("tiktok:disconnect", async () => {
 
 
 
+ipcMain.handle("tiktok:open-account", async () => {
+  try {
+    return openTikTokAccountWindow();
+  } catch (error) {
+    console.error(
+      "[LocalTikTok] Erro ao abrir conta TikTok:",
+      error
+    );
+
+    return {
+      success: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
 ipcMain.handle("tiktok:connect-local", async (_event, username) => {
   try {
     configureActionEngine();
@@ -275,4 +291,6 @@ app.on("window-all-closed", () => {
     app.quit();
   }
 });
+
+
 

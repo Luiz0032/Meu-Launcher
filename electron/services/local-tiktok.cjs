@@ -10,6 +10,7 @@ const BASE_RECONNECT_DELAY = 2000;
 const INITIAL_CONNECTION_TIMEOUT = 15000;
 
 let tiktokWindow = null;
+let accountWindow = null;
 let currentOnEvent = null;
 let websocketListenerRegistered = false;
 
@@ -701,10 +702,69 @@ function disconnectLocalTikTok() {
   tiktokWindow = null;
 }
 
+function openTikTokAccountWindow() {
+  if (
+    accountWindow &&
+    !accountWindow.isDestroyed()
+  ) {
+    accountWindow.show();
+    accountWindow.focus();
+
+    return {
+      success: true
+    };
+  }
+
+  accountWindow =
+    new BrowserWindow({
+      width: 1100,
+      height: 800,
+      minWidth: 900,
+      minHeight: 650,
+
+      show: true,
+
+      backgroundColor:
+        "#ffffff",
+
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+
+        partition:
+          "persist:tiktok-live"
+      }
+    });
+
+  const chromeVersion =
+    process.versions.chrome;
+
+  accountWindow.webContents.setUserAgent(
+    `Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${chromeVersion} Safari/537.36`
+  );
+  accountWindow.on(
+    "closed",
+    () => {
+      accountWindow = null;
+    }
+  );
+
+  accountWindow.loadURL(
+    "https://www.tiktok.com/login"
+  );
+
+  return {
+    success: true
+  };
+}
+
 module.exports = {
   connectLocalTikTok,
-  disconnectLocalTikTok
+  disconnectLocalTikTok,
+  openTikTokAccountWindow
 };
+
+
 
 
 
