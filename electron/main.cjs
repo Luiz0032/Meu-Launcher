@@ -7,6 +7,11 @@ const {
 } = require("./services/tiktok.cjs");
 
 const {
+  connectLocalTikTok,
+  disconnectLocalTikTok
+} = require("./services/local-tiktok.cjs");
+
+const {
   processEvent,
   clearRules
 } = require("./services/action-engine.cjs");
@@ -207,4 +212,64 @@ app.on("window-all-closed", () => {
 });
 
 
+
+
+
+ipcMain.handle("tiktok:connect-local", async (_event, username) => {
+  try {
+    configureActionEngine();
+
+    const result = await connectLocalTikTok(
+      username,
+      async (type, data) => {
+        sendToWindow(
+          mainWindow,
+          "tiktok:event",
+          type,
+          data
+        );
+
+        await processEvent(type, data, {
+          emitGameAction
+        });
+      }
+    );
+
+    return {
+      success: true,
+      username: result.username,
+      mode: result.mode
+    };
+  } catch (error) {
+    console.error(
+      "[LocalTikTok] Erro ao conectar:",
+      error
+    );
+
+    return {
+      success: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
+
+ipcMain.handle("tiktok:disconnect-local", async () => {
+  try {
+    disconnectLocalTikTok();
+
+    return {
+      success: true
+    };
+  } catch (error) {
+    console.error(
+      "[LocalTikTok] Erro ao desconectar:",
+      error
+    );
+
+    return {
+      success: false,
+      error: error?.message ?? String(error)
+    };
+  }
+});
 

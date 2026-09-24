@@ -17,6 +17,18 @@ declare global {
         error?: string;
       }>;
 
+      connectLocalTikTok: (username: string) => Promise<{
+        success: boolean;
+        username?: string;
+        mode?: string;
+        error?: string;
+      }>;
+
+      disconnectLocalTikTok: () => Promise<{
+        success: boolean;
+        error?: string;
+      }>;
+
       openGame: () => Promise<{
         success: boolean;
         error?: string;

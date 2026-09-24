@@ -245,15 +245,59 @@ function App() {
     }
   }
 
+  async function handleLocalConnect() {
+    if (!username.trim()) {
+      setStatusMessage("Informe um usuário");
+      return;
+    }
+
+    try {
+      setConnecting(true);
+      setStatusMessage("Conectando localmente...");
+
+      const result =
+        await window.liveAPI.connectLocalTikTok(username);
+
+      if (!result.success) {
+        setConnected(false);
+        setStatusMessage(
+          result.error ?? "Erro ao conectar localmente"
+        );
+        return;
+      }
+
+      setConnected(true);
+      setGiftCount(0);
+      setEventCount(0);
+      setEvents([]);
+      setGameActions([]);
+      setStartTime(Date.now());
+
+      setStatusMessage(
+        `Conectado localmente em @${result.username}`
+      );
+    } catch (error) {
+      console.error(error);
+      setConnected(false);
+      setStatusMessage(
+        "Erro ao conectar localmente"
+      );
+    } finally {
+      setConnecting(false);
+    }
+  }
+
   async function handleDisconnect() {
-    await window.liveAPI.disconnectTikTok();
+    await Promise.allSettled([
+      window.liveAPI.disconnectTikTok(),
+      window.liveAPI.disconnectLocalTikTok()
+    ]);
 
     setConnected(false);
     setConnecting(false);
     setStatusMessage("Desconectado");
     setStartTime(null);
   }
-
 
   async function handleOpenGame() {
     const result = await window.liveAPI.openGame();
@@ -406,15 +450,27 @@ function App() {
                 />
 
                 {!connected ? (
-                  <button
-                    className="primary-button"
-                    onClick={handleConnect}
-                    disabled={connecting}
-                  >
-                    {connecting
-                      ? "Conectando..."
-                      : "Conectar"}
-                  </button>
+                  <div style={{ display: "flex", gap: "10px" }}>
+                    <button
+                      className="primary-button"
+                      onClick={handleConnect}
+                      disabled={connecting}
+                    >
+                      {connecting
+                        ? "Conectando..."
+                        : "Conectar"}
+                    </button>
+
+                    <button
+                      className="primary-button"
+                      onClick={handleLocalConnect}
+                      disabled={connecting}
+                    >
+                      {connecting
+                        ? "Conectando..."
+                        : "Conectar localmente"}
+                    </button>
+                  </div>
                 ) : (
                   <div style={{ display: "flex", gap: "10px" }}>
                     <button
@@ -644,6 +700,8 @@ function App() {
 }
 
 export default App;
+
+
 
 
 
