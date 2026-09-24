@@ -37,6 +37,17 @@ contextBridge.executeInMainWorld({
       }
     );
 
+    function sendEvent(kind, data = {}) {
+      window.postMessage(
+        {
+          __LIVE_LAUNCHER_TIKTOK__: true,
+          kind,
+          ...data
+        },
+        "*"
+      );
+    }
+
     function arrayBufferToBase64(buffer) {
       const bytes = new Uint8Array(buffer);
 
@@ -77,13 +88,53 @@ contextBridge.executeInMainWorld({
             target
           );
 
-          window.postMessage(
-            {
-              __LIVE_LAUNCHER_TIKTOK__: true,
-              kind: "created",
-              url: String(args[0] ?? "")
-            },
-            "*"
+          const initialUrl =
+            String(args[0] ?? "");
+
+          sendEvent("created", {
+            url: initialUrl
+          });
+
+          socket.addEventListener(
+            "open",
+            () => {
+              sendEvent("open", {
+                url:
+                  socket.url ||
+                  initialUrl
+              });
+            }
+          );
+
+          socket.addEventListener(
+            "close",
+            (event) => {
+              sendEvent("close", {
+                url:
+                  socket.url ||
+                  initialUrl,
+
+                code:
+                  event.code,
+
+                reason:
+                  event.reason ?? "",
+
+                wasClean:
+                  event.wasClean
+              });
+            }
+          );
+
+          socket.addEventListener(
+            "error",
+            () => {
+              sendEvent("error", {
+                url:
+                  socket.url ||
+                  initialUrl
+              });
+            }
           );
 
           socket.addEventListener(
@@ -109,16 +160,21 @@ contextBridge.executeInMainWorld({
                 return;
               }
 
-              window.postMessage(
+              sendEvent(
+                "binary-message",
                 {
-                  __LIVE_LAUNCHER_TIKTOK__: true,
-                  kind: "binary-message",
-                  url: socket.url,
-                  size: buffer.byteLength,
+                  url:
+                    socket.url ||
+                    initialUrl,
+
+                  size:
+                    buffer.byteLength,
+
                   base64:
-                    arrayBufferToBase64(buffer)
-                },
-                "*"
+                    arrayBufferToBase64(
+                      buffer
+                    )
+                }
               );
             }
           );

@@ -190,26 +190,7 @@ ipcMain.handle("tiktok:disconnect", async () => {
   }
 });
 
-app.whenReady().then(() => {
-  configureActionEngine();
-  createWindow();
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
-    }
-  });
-});
-
-app.on("before-quit", () => {
-  disconnectTikTok();
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
-});
 
 
 
@@ -270,6 +251,28 @@ ipcMain.handle("tiktok:disconnect-local", async () => {
       success: false,
       error: error?.message ?? String(error)
     };
+  }
+});
+
+app.whenReady().then(() => {
+  configureActionEngine();
+  createWindow();
+
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createWindow();
+    }
+  });
+});
+
+app.on("before-quit", () => {
+  disconnectTikTok();
+  disconnectLocalTikTok();
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") {
+    app.quit();
   }
 });
 
