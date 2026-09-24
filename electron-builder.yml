@@ -1,0 +1,25 @@
+﻿appId: com.luiz0032.livelauncher
+productName: Live Launcher
+
+directories:
+  output: release
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - package.json
+
+asar: true
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  artifactName: LiveLauncher-Setup-${version}.${ext}
