@@ -7,6 +7,7 @@ const path = require("path");
 
 const MAX_RECONNECT_ATTEMPTS = 5;
 const BASE_RECONNECT_DELAY = 2000;
+const INITIAL_CONNECTION_TIMEOUT = 15000;
 
 let tiktokWindow = null;
 let currentOnEvent = null;
@@ -18,6 +19,10 @@ let reconnecting = false;
 let reconnectAttempt = 0;
 let reconnectTimer = null;
 let manualDisconnect = false;
+
+let initialConnectionResolve = null;
+let initialConnectionReject = null;
+let initialConnectionTimer = null;
 
 const connectorPromise =
   import("tiktok-live-connector");
@@ -57,6 +62,56 @@ function clearReconnectTimer() {
   }
 }
 
+function clearInitialConnectionWait() {
+  if (initialConnectionTimer) {
+    clearTimeout(initialConnectionTimer);
+    initialConnectionTimer = null;
+  }
+
+  initialConnectionResolve = null;
+  initialConnectionReject = null;
+}
+
+function resolveInitialConnection() {
+  const resolve =
+    initialConnectionResolve;
+
+  clearInitialConnectionWait();
+
+  if (resolve) {
+    resolve();
+  }
+}
+
+function waitForInitialConnection() {
+  if (liveSocketOpen) {
+    return Promise.resolve();
+  }
+
+  return new Promise(
+    (resolve, reject) => {
+      initialConnectionResolve =
+        resolve;
+
+      initialConnectionReject =
+        reject;
+
+      initialConnectionTimer =
+        setTimeout(
+          () => {
+            clearInitialConnectionWait();
+
+            reject(
+              new Error(
+                "Não foi possível detectar a conexão da TikTok Live dentro do tempo esperado."
+              )
+            );
+          },
+          INITIAL_CONNECTION_TIMEOUT
+        );
+    }
+  );
+}
 function getLiveUrl() {
   if (!activeUsername) {
     return null;
@@ -302,6 +357,7 @@ function handleSocketOpen() {
   liveSocketOpen = true;
 
   clearReconnectTimer();
+  resolveInitialConnection();
 
   console.log(
     "[LocalTikTok] WebSocket conectado."
@@ -500,7 +556,7 @@ async function connectLocalTikTok(
       width: 1200,
       height: 850,
 
-      show: true,
+      show: false,
 
       backgroundColor:
         "#ffffff",
@@ -508,6 +564,7 @@ async function connectLocalTikTok(
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
+        backgroundThrottling: false,
 
         partition:
           "persist:tiktok-live",
@@ -586,6 +643,33 @@ async function connectLocalTikTok(
     liveUrl
   );
 
+  try {
+    await waitForInitialConnection();
+  } catch (error) {
+    manualDisconnect = true;
+
+    clearInitialConnectionWait();
+    clearReconnectTimer();
+
+    currentOnEvent = null;
+    activeUsername = null;
+
+    liveSocketOpen = false;
+    reconnecting = false;
+    reconnectAttempt = 0;
+
+    if (
+      tiktokWindow &&
+      !tiktokWindow.isDestroyed()
+    ) {
+      tiktokWindow.destroy();
+    }
+
+    tiktokWindow = null;
+
+    throw error;
+  }
+
   return {
     username:
       normalizedUsername,
@@ -621,3 +705,8 @@ module.exports = {
   connectLocalTikTok,
   disconnectLocalTikTok
 };
+
+
+
+
+
